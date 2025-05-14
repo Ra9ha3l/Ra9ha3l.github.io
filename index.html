@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fullscreen Video Player</title>
+<style>
+body {
+  font-family: sans-serif;
+  margin: 0; /* Remove default body margins */
+  overflow: hidden; /* Hide scrollbars */
+  height: 100vh;
+  display: flex;
+  flex-direction: column; /* Stack the form and video */
+  background-color: #000; /* Make background black for fullscreen */
+}
+
+#video-url-form {
+  background-color: #333;
+  color: white;
+  padding: 10px;
+  text-align: center;
+}
+
+#video-url {
+  padding: 8px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #444;
+  color: white;
+}
+
+#load-video {
+  padding: 8px 16px;
+  background-color: #555;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#video-container {
+  flex: 1; /* Take up remaining space */
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Center the video */
+  width: 100%; /* Important for fullscreen */
+  height: 100%; /* Important for fullscreen */
+}
+
+video {
+  width: 100%; /* Fill the container */
+  height: 100%; /* Fill the container */
+  object-fit: contain; /* Keep aspect ratio, fit inside */
+  display: block; /* Remove default spacing */
+}
+
+.controls {
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent */
+  color: white;
+  padding: 10px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1; /* Ensure controls are on top */
+}
+
+button {
+  background-color: #555;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background-color: #777;
+}
+
+input[type="range"] {
+  width: 60%;
+}
+
+/* Improved progress bar styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 60%;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+/* Chrome, Safari, Opera and new Edge */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #ddd;
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #ddd;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Track styling */
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #777;
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #777;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+}
+</style>
+</head>
+<body>
+
+<form id="video-url-form">
+  <label for="video-url">Video URL:</label>
+  <input type="text" id="video-url" name="video-url" placeholder="Enter video URL">
+  <button type="button" id="load-video">Load Video</button>
+</form>
+
+<div id="video-container">
+  <video id="myVideo" controls crossorigin="anonymous">
+    <source id="videoSource" src="" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <div class="controls">
+      <button id="playPauseBtn">Play</button>
+      <input type="range" id="progressBar" value="0">
+      <button id="muteBtn">Mute</button>
+      <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+  </div>
+</div>
+
+<script>
+  const video = document.getElementById('myVideo');
+  const videoSource = document.getElementById('videoSource');
+  const loadVideoButton = document.getElementById('load-video');
+  const videoUrlInput = document.getElementById('video-url');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const progressBar = document.getElementById('progressBar');
+  const muteBtn = document.getElementById('muteBtn');
+  const currentTimeDisplay = document.getElementById('currentTime');
+  const durationDisplay = document.getElementById('duration');
+  const videoContainer = document.getElementById('video-container');
+
+  // Function to set the video source
+  function setVideoSource(url) {
+    videoSource.src = url;
+    video.load(); // Load the new source
+    video.play(); // Auto-play after loading
+
+  }
+
+  loadVideoButton.addEventListener('click', () => {
+    const url = videoUrlInput.value;
+    if (url) {
+      setVideoSource(url);
+    } else {
+      alert("Please enter a video URL.");
+    }
+  });
+
+    // Play/Pause functionality
+    playPauseBtn.addEventListener('click', () => {
+    if (video.paused) {
+      video.play();
+      playPauseBtn.textContent = 'Pause';
+    } else {
+      video.pause();
+      playPauseBtn.textContent = 'Play';
+    }
+  });
+
+  // Mute/Unmute functionality
+  muteBtn.addEventListener('click', () => {
+    if (video.muted) {
+      video.muted = false;
+      muteBtn.textContent = 'Mute';
+    } else {
+      video.muted = true;
+      muteBtn.textContent = 'Unmute';
+    }
+  });
+
+  // Update progress bar
+  video.addEventListener('timeupdate', () => {
+    const percentage = (video.currentTime / video.duration) * 100;
+    progressBar.value = percentage;
+    updateCurrentTime();
+  });
+
+  // Seek functionality with the progress bar
+  progressBar.addEventListener('input', () => {
+    const seekTime = video.duration * (progressBar.value / 100);
+    video.currentTime = seekTime;
+  });
+
+  //Update time display
+  function updateCurrentTime() {
+    currentTimeDisplay.textContent = formatTime(video.currentTime);
+    durationDisplay.textContent = formatTime(video.duration);
+  }
+
+  //Format time in mm:ss
+  function formatTime(time) {
+      if (isNaN(time)) {
+          return "0:00";
+      }
+
+      const minutes = Math.floor(time / 60);
+      const seconds = Math.floor(time % 60).toString().padStart(2, '0'); // Ensure two digits
+      return `${minutes}:${seconds}`;
+  }
+
+  //When video metadata is loaded get duration
+  video.addEventListener('loadedmetadata', () => {
+      durationDisplay.textContent = formatTime(video.duration);
+  });
+
+  //Handle video ending.
+  video.addEventListener('ended', () => {
+      playPauseBtn.textContent = 'Play';
+      video.currentTime = 0;
+      progressBar.value = 0;
+      updateCurrentTime();
+  });
+
+</script>
+
+</body>
+</html>
